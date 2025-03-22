@@ -91,3 +91,47 @@ def factorizacion_lu():
 
         print("\nSolución del sistema (x):")
         print(x)
+
+def es_diagonalmente_dominante(matriz):
+    n = len(matriz)
+    for i in range(n):
+        suma = sum(abs(matriz[i][j]) for j in range(n) if j != i)
+        if abs(matriz[i][i]) <= suma:
+            return False
+    return True
+
+def redefinir_sistema(matriz, vector):
+    n = len(matriz)
+    for i in range(n):
+        suma = sum(abs(matriz[i][j]) for j in range(n) if j != i)
+        if abs(matriz[i][i]) <= suma:
+            # Ajustar el elemento diagonal para que sea mayor que la suma de los otros elementos
+            matriz[i][i] = suma + 1  # Se suma 1 para asegurar que sea estrictamente mayor
+    return matriz, vector
+
+def jacobi():
+    print("\nHas seleccionado el Método de Jacobi.")
+    matriz, vector = ingresar_matriz_y_vector()
+    if matriz is None or vector is None:
+        return
+
+    if not es_diagonalmente_dominante(matriz):
+        print("El sistema no está bien condicionado. Redefiniendo el sistema...")
+        matriz, vector = redefinir_sistema(matriz, vector)
+        if not es_diagonalmente_dominante(matriz):
+            print("No se pudo redefinir el sistema para que sea diagonalmente dominante.")
+            return
+
+    n = len(matriz)
+    iteraciones = int(input("Ingresa la cantidad de iteraciones: "))
+    x = [0.0] * n
+
+    for _ in range(iteraciones):
+        x_nuevo = [0.0] * n
+        for i in range(n):
+            suma = sum(matriz[i][j] * x[j] for j in range(n) if j != i)
+            x_nuevo[i] = (vector[i] - suma) / matriz[i][i]
+        x = x_nuevo
+
+    print("\nSolución aproximada del sistema (x):")
+    print(x)
