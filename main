@@ -6,7 +6,7 @@ while True:
         if opcion == '1':
             Funciones.factorizacion_lu()
         elif opcion == '2':
-            Funciones.metodo_jacobi()
+            Funciones.jacobi()
         elif opcion == '3':
             Funciones.gauss_jordan()
         elif opcion == '4':
