@@ -1,3 +1,7 @@
+
+import numpy
+from numpy import array, zeros
+
 def mostrar_menu():
     print("MENU:")
     print("1. FACTORIZACIÓN LU")
@@ -23,9 +27,31 @@ def ingresar_matriz_y_vector():
 
     return matriz, vector
 
+def ingresar_matriz_y_vectorGJ():
+    print("Ingresa la matriz 3x3 (fila por fila, separando los números con espacios):")
+    matriz = []
+    for i in range(3):
+        fila = list(map(float, input(f"Fila {i + 1}: ").split()))
+        if len(fila) != 3:
+            print("Error: Debes ingresar exactamente 4 números por fila.")
+            return None, None
+        matriz.append(fila)
+
+    print("Ingresa el vector de términos independientes (4 números separados por espacios):")
+    vector = list(map(float, input().split()))
+    if len(vector) != 4:
+        print("Error: Debes ingresar exactamente 4 números para el vector.")
+        return None, None
+
+    return matriz, vector
+
+
+
+
+
 def factorizacion_lu():
     print("\nHas seleccionado Factorización LU.")
-    matriz, vector = ingresar_matriz_y_vector()
+    matriz, vector = ingresar_matriz_y_vector() 
     if matriz is not None and vector is not None:
         n = 4
         L = [[0.0] * n for _ in range(n)]
@@ -36,21 +62,21 @@ def factorizacion_lu():
         A = [fila.copy() for fila in matriz]
 
         # Factorización LU con pivoteo parcial
-        for i in range(n):
+        for i in range(n): #empieza a iterarse por numero de columna
             # Pivoteo parcial: encontrar la fila con el máximo elemento en la columna i
-            max_row = i
-            for k in range(i + 1, n):
-                if abs(A[k][i]) > abs(A[max_row][i]):
+            max_row = i #aquí empieza desde la primera columna
+            for k in range(i + 1, n): #aquí se va a ver cada fila de cada columna
+                if abs(A[k][i]) > abs(A[max_row][i]): #aquí se ve examina cual es el mayor elemento de todas las filas
                     max_row = k
 
-            if max_row != i:
-                A[i], A[max_row] = A[max_row], A[i]
+            if max_row != i: #si el max_row no es igual al numero de columna se intercambian las filas en A, P y L
+                A[i], A[max_row] = A[max_row], A[i] #se definen las dimensiones de la matriz A y P
                 P[i], P[max_row] = P[max_row], P[i]
-                if i > 0:
-                    L[i][:i], L[max_row][:i] = L[max_row][:i], L[i][:i]
-
+                if i > 0: 
+                    L[i][:i], L[max_row][:i] = L[max_row][:i], L[i][:i] #Realiza un intercambio de elementos entre dos filas de la matriz L pero solo para las primeras i columnas< va desde columna 0 hasta columna i-1
             
-            if A[i][i] == 0:
+            
+            if A[i][i] == 0: #Si no se encuentra el pivote
                 print("Error: La matriz es singular y no se puede factorizar.")
                 return
 
@@ -135,3 +161,37 @@ def jacobi():
 
     print("\nSolución aproximada del sistema (x):")
     print(x)
+
+def Gauss_Jordan():
+    matriz,vector=ingresar_matriz_y_vector()
+    if matriz is None:
+        return
+    a=array(matriz, float)
+    b=array(vector, float)
+    n=len(b)
+    # Main loop
+    for k in range(n):
+        # Partial Pivoting
+        if numpy.fabs(a[k, k]) < 1.0e-12:
+            for i in range(k + 1, n):
+                if numpy.fabs(a[i, k]) > numpy.fabs(a[k, k]):
+                    for j in range(k, n):
+                        a[k, j], a[i, j] = a[i, j], a[k, j]
+                    b[k], b[i] = b[i], b[k]
+                    break
+
+        # Division of the pivot row
+        pivot = a[k, k]
+        for j in range(k, n):
+            a[k, j] /= pivot
+        b[k] /= pivot
+
+        # Elimination loop
+        for i in range(n):
+            if i == k or a[i, k] == 0: continue
+            factor = a[i, k]
+            for j in range(k, n):
+                a[i, j] -= factor * a[k, j]
+            b[i] -= factor * b[k]
+
+    return b, a

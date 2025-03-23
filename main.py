@@ -8,7 +8,11 @@ while True:
         elif opcion == '2':
             Funciones.jacobi()
         elif opcion == '3':
-            Funciones.gauss_jordan()
+            A, B=Funciones.Gauss_Jordan()
+            print("La matriz transformada:")
+            print(B)
+            print("La solución es:")
+            print(A)
         elif opcion == '4':
             print("Saliendo del programa...")
             break
