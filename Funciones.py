@@ -1,7 +1,3 @@
-
-import numpy
-from numpy import array, zeros
-
 def mostrar_menu():
     print("MENU:")
     print("1. FACTORIZACIÓN LU")
@@ -27,56 +23,32 @@ def ingresar_matriz_y_vector():
 
     return matriz, vector
 
-def ingresar_matriz_y_vectorGJ():
-    print("Ingresa la matriz 3x3 (fila por fila, separando los números con espacios):")
-    matriz = []
-    for i in range(3):
-        fila = list(map(float, input(f"Fila {i + 1}: ").split()))
-        if len(fila) != 3:
-            print("Error: Debes ingresar exactamente 4 números por fila.")
-            return None, None
-        matriz.append(fila)
-
-    print("Ingresa el vector de términos independientes (4 números separados por espacios):")
-    vector = list(map(float, input().split()))
-    if len(vector) != 4:
-        print("Error: Debes ingresar exactamente 4 números para el vector.")
-        return None, None
-
-    return matriz, vector
-
-
-
-
-
 def factorizacion_lu():
     print("\nHas seleccionado Factorización LU.")
-    matriz, vector = ingresar_matriz_y_vector() 
+    matriz, vector = ingresar_matriz_y_vector()
     if matriz is not None and vector is not None:
         n = 4
         L = [[0.0] * n for _ in range(n)]
         U = [[0.0] * n for _ in range(n)]
-        P = [[float(i == j) for j in range(n)] for i in range(n)]  # Matriz de permutación
+        P = [[float(i == j) for j in range(n)] for i in range(n)]  
 
-        # Copiar la matriz original para no modificarla
         A = [fila.copy() for fila in matriz]
 
         # Factorización LU con pivoteo parcial
-        for i in range(n): #empieza a iterarse por numero de columna
-            # Pivoteo parcial: encontrar la fila con el máximo elemento en la columna i
-            max_row = i #aquí empieza desde la primera columna
-            for k in range(i + 1, n): #aquí se va a ver cada fila de cada columna
-                if abs(A[k][i]) > abs(A[max_row][i]): #aquí se ve examina cual es el mayor elemento de todas las filas
+        for i in range(n):
+            max_row = i
+            for k in range(i + 1, n):
+                if abs(A[k][i]) > abs(A[max_row][i]):
                     max_row = k
 
-            if max_row != i: #si el max_row no es igual al numero de columna se intercambian las filas en A, P y L
-                A[i], A[max_row] = A[max_row], A[i] #se definen las dimensiones de la matriz A y P
+            if max_row != i:
+                A[i], A[max_row] = A[max_row], A[i]
                 P[i], P[max_row] = P[max_row], P[i]
-                if i > 0: 
-                    L[i][:i], L[max_row][:i] = L[max_row][:i], L[i][:i] #Realiza un intercambio de elementos entre dos filas de la matriz L pero solo para las primeras i columnas< va desde columna 0 hasta columna i-1
+                if i > 0:
+                    L[i][:i], L[max_row][:i] = L[max_row][:i], L[i][:i]
+
             
-            
-            if A[i][i] == 0: #Si no se encuentra el pivote
+            if A[i][i] == 0:
                 print("Error: La matriz es singular y no se puede factorizar.")
                 return
 
@@ -128,11 +100,15 @@ def es_diagonalmente_dominante(matriz):
 
 def redefinir_sistema(matriz, vector):
     n = len(matriz)
-    for i in range(n):
-        suma = sum(abs(matriz[i][j]) for j in range(n) if j != i)
-        if abs(matriz[i][i]) <= suma:
-            # Ajustar el elemento diagonal para que sea mayor que la suma de los otros elementos
-            matriz[i][i] = suma + 1  # Se suma 1 para asegurar que sea estrictamente mayor
+    for col in range(n):
+        max_row = col
+        for k in range(col + 1, n):
+            if abs(matriz[k][col]) > abs(matriz[max_row][col]):
+                max_row = k
+        
+        if max_row != col:
+            matriz[col], matriz[max_row] = matriz[max_row], matriz[col]
+            vector[col], vector[max_row] = vector[max_row], vector[col]
     return matriz, vector
 
 def jacobi():
@@ -141,57 +117,73 @@ def jacobi():
     if matriz is None or vector is None:
         return
 
+    n = len(matriz)
+    matriz, vector = redefinir_sistema(matriz, vector)  # Reordenar filas primero
+
     if not es_diagonalmente_dominante(matriz):
-        print("El sistema no está bien condicionado. Redefiniendo el sistema...")
-        matriz, vector = redefinir_sistema(matriz, vector)
-        if not es_diagonalmente_dominante(matriz):
-            print("No se pudo redefinir el sistema para que sea diagonalmente dominante.")
+        print("\nADVERTENCIA: El sistema no es diagonalmente dominante incluso después de reordenar.")
+        print("El método de Jacobi puede no converger o dar resultados incorrectos.")
+        continuar = input("¿Deseas continuar de todos modos? (s/n): ").lower()
+        if continuar != 's':
             return
 
-    n = len(matriz)
     iteraciones = int(input("Ingresa la cantidad de iteraciones: "))
-    x = [0.0] * n
+    x = [0.0] * n  # Solución inicial :)
 
-    for _ in range(iteraciones):
+    print("\nIteración\tValores de x")
+    print(f"0\t\t{x}")
+
+    for it in range(1, iteraciones + 1):
         x_nuevo = [0.0] * n
         for i in range(n):
             suma = sum(matriz[i][j] * x[j] for j in range(n) if j != i)
             x_nuevo[i] = (vector[i] - suma) / matriz[i][i]
         x = x_nuevo
+        print(f"{it}\t\t{x}")
 
-    print("\nSolución aproximada del sistema (x):")
-    print(x)
+    print("\nSolución aproximada después de", iteraciones, "iteraciones:")
+    print([round(val, 6) for val in x])  # Redondeo 
 
-def Gauss_Jordan():
-    matriz,vector=ingresar_matriz_y_vector()
-    if matriz is None:
+def gauss_jordan():
+    print("\nHas seleccionado Solución Directa por Gauss-Jordan.")
+    matriz, vector = ingresar_matriz_y_vector()
+    if matriz is None or vector is None:
         return
-    a=array(matriz, float)
-    b=array(vector, float)
-    n=len(b)
-    # Main loop
-    for k in range(n):
-        # Partial Pivoting
-        if numpy.fabs(a[k, k]) < 1.0e-12:
-            for i in range(k + 1, n):
-                if numpy.fabs(a[i, k]) > numpy.fabs(a[k, k]):
-                    for j in range(k, n):
-                        a[k, j], a[i, j] = a[i, j], a[k, j]
-                    b[k], b[i] = b[i], b[k]
-                    break
+    
+    n = 4
 
-        # Division of the pivot row
-        pivot = a[k, k]
-        for j in range(k, n):
-            a[k, j] /= pivot
-        b[k] /= pivot
-
-        # Elimination loop
+    aumentada = [fila.copy() for fila in matriz]
+    for i in range(n):
+        aumentada[i].append(vector[i])
+    
+    for col in range(n):
+        max_row = col
+        for k in range(col + 1, n):
+            if abs(aumentada[k][col]) > abs(aumentada[max_row][col]):
+                max_row = k
+        
+        if max_row != col:
+            aumentada[col], aumentada[max_row] = aumentada[max_row], aumentada[col]
+        
+        if abs(aumentada[col][col]) < 1e-10:  
+            print("Error: La matriz es singular y no tiene solución única.")
+            return
+        
+        pivot = aumentada[col][col]
+        for j in range(col, n + 1):
+            aumentada[col][j] /= pivot
+        
         for i in range(n):
-            if i == k or a[i, k] == 0: continue
-            factor = a[i, k]
-            for j in range(k, n):
-                a[i, j] -= factor * a[k, j]
-            b[i] -= factor * b[k]
-
-    return b, a
+            if i != col:
+                factor = aumentada[i][col]
+                for j in range(col, n + 1):
+                    aumentada[i][j] -= factor * aumentada[col][j]
+    
+    solucion = [round(aumentada[i][n], 10) for i in range(n)] 
+    
+    print("\nMatriz aumentada final en forma reducida:")
+    for fila in aumentada:
+        print([f"{x:.6f}".rstrip('0').rstrip('.') if '.' in f"{x:.6f}" else f"{x:.6f}" for x in fila])
+    
+    print("\nSolución del sistema (x):")
+    print([x if abs(x) > 1e-10 else 0.0 for x in solucion])  
